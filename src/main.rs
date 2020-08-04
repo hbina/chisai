@@ -7,7 +7,7 @@ use rayon::prelude::*;
 
 fn main() {
     let matches = App::new("chisai")
-        .version("1.0")
+        .version("0.1.1")
         .author("Hanif Bin Ariffin <hanif.ariffin.4326@gmail.com>")
         .about("Transform binaries into embeddable code.")
         // Required arguments.

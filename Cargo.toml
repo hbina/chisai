@@ -1,8 +1,13 @@
 [package]
 name = "chisai"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Hanif Bin Ariffin <hanif.ariffin.4326@gmail.com>"]
 edition = "2018"
+description = "Convert binaries into code that can be embed into your program."
+license = "MIT"
+documentation = "https://github.com/hbina/chisai"
+repository = "https://github.com/hbina/chisai"
+homepage = "https://github.com/hbina/chisai"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
