@@ -3,6 +3,7 @@ extern crate clap;
 use std::fs;
 
 use clap::{App, Arg};
+use rayon::prelude::*;
 
 fn main() {
     let matches = App::new("chisai")
@@ -77,51 +78,53 @@ fn main() {
     let q = '\"' as i32;
     let s = '\\' as i32;
     // TODO: Is it possible to integrate rayon?
-    let contents = fs::read(input_file_name)
-        // TODO: Figure out a way to optionally perform this...
+    let content = fs::read(input_file_name)
         .expect("Something went wrong reading the file.")
-        .iter()
-        .map(|x| {
-            let c = *x as i32;
-            if always_escape {
-                format!(
-                    "\\{}{}{}",
-                    ('0' as u8 + ((c & 0o700) >> 6) as u8) as char,
-                    ('0' as u8 + ((c & 0o070) >> 3) as u8) as char,
-                    ('0' as u8 + ((c & 0o007) >> 0) as u8) as char
-                )
-            } else if c >= 32 && c <= 126 && c != '"' as i32 && c != '\\' as i32 && c != '?' as i32 && c != ':' as i32 && c != '%' as i32 {
-                format!("{}", c as u8 as char)
-            } else if c == r {
-                format!("\\r")
-            } else if c == n {
-                format!("\\n")
-            } else if c == t {
-                format!("\\t")
-            } else if c == q {
-                format!("\"")
-            } else if c == s {
-                format!("\\")
-            } else {
-                format!(
-                    "\\{}{}{}",
-                    ('0' as u8 + ((c & 0o700) >> 6) as u8) as char,
-                    ('0' as u8 + ((c & 0o070) >> 3) as u8) as char,
-                    ('0' as u8 + ((c & 0o007) >> 0) as u8) as char
-                )
-            }
-        })
-        .collect::<Vec<String>>()
-        .iter()
-        .map(|x| x.chars())
-        .flatten()
-        .collect::<String>();
+        .par_iter()
+        // TODO: It would be amazing if we could preallocate...
+        .fold(|| String::new(),
+              |mut acc: String, x: &u8| {
+                  let c = *x as i32;
+
+                  if always_escape {
+                      acc.push('\\' as u8 as char);
+                      acc.push(('0' as u8 + ((c & 0o700) >> 6) as u8) as char);
+                      acc.push(('0' as u8 + ((c & 0o070) >> 3) as u8) as char);
+                      acc.push(('0' as u8 + ((c & 0o007) >> 0) as u8) as char);
+                  } else if c >= 32 && c <= 126 && c != '"' as i32 && c != '\\' as i32 && c != '?' as i32 && c != ':' as i32 && c != '%' as i32 {
+                      acc.push(c as u8 as char)
+                  } else if c == r {
+                      acc.push('\r' as u8 as char);
+                  } else if c == n {
+                      acc.push('\n' as u8 as char);
+                  } else if c == t {
+                      acc.push('\t' as u8 as char);
+                  } else if c == q {
+                      acc.push('\"' as u8 as char);
+                  } else if c == s {
+                      acc.push('\\' as u8 as char);
+                  } else {
+                      acc.push('\\' as u8 as char);
+                      acc.push(('0' as u8 + ((c & 0o700) >> 6) as u8) as char);
+                      acc.push(('0' as u8 + ((c & 0o070) >> 3) as u8) as char);
+                      acc.push(('0' as u8 + ((c & 0o007) >> 0) as u8) as char);
+                  }
+                  acc
+              }).reduce(|| String::new(),
+                        |mut a: String, b: String| {
+                            a.push_str(&b);
+                            a
+                        });
 
     match language {
-        "cpp" | "c++" => {
-            // TODO: Figure out how to create the name...
-            println!("const unsigned char {}[] = \"{}\";", output_variable_name, contents);
-            println!("const int {}_len =\"{}\";", output_variable_name, contents.len());
+        "c" | "cpp" | "c++" => {
+            println!("const unsigned char {}[] = \"{}\";", output_variable_name, content);
+        }
+        "python" | "py" => {
+            println!("{}: str = {};", output_variable_name, content);
+        }
+        "java" => {
+            println!("String {} = {};", output_variable_name, content);
         }
         _ => panic!(format!("Unknown language:{}. If you think this tool should support this language extension, please submit a PR.", language))
     }
