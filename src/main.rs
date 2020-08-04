@@ -1,8 +1,9 @@
 extern crate clap;
 
-use clap::{App, Arg, SubCommand};
 use std::env;
 use std::fs;
+
+use clap::{App, Arg, SubCommand};
 
 fn main() {
     let matches = App::new("chisai")
@@ -33,6 +34,16 @@ fn main() {
                 .required(true),
         )
         // Optional arguments
+        .arg(
+            Arg::with_name("output-name")
+                .help("Specify the name of the output variable.")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("output-length")
+                .help("If specified, the length of the vector will also be generated.")
+                .takes_value(true),
+        )
         .arg(Arg::with_name("no-const").help("Generated variables are mutable."))
         // NOTE: I don't quite get what this means...
         .arg(
@@ -64,6 +75,11 @@ fn main() {
         // TODO: Figure out a way to optionally perform this...
         .expect("Something went wrong reading the file.");
 
-    println!("const unsigned char stdin[] = {:#?};", contents);
-    println!("const int stdin_len = {:#?};", contents.len());
+    match language {
+        "cpp" | "c++" => {
+            println!("const unsigned char stdin[] = {:#?};", contents);
+            println!("const int stdin_len = {:#?};", contents.len());
+        }
+        _ => panic!(format!("Unknown language:{}. If you think this tool should support this language extension, please submit a PR.", language))
+    }
 }
