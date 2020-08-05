@@ -1,5 +1,7 @@
 # chisai 
 
+[![Crate](https://img.shields.io/crates/v/chisai.svg)](https://crates.io/crates/chisai)
+
 Convert binaries into code that can be embedded statically.
 Almost at full parity with [`strliteral`](https://github.com/mortie/strliteral) and definitely not against `xxd`.
 Many features are WIP.
