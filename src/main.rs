@@ -56,7 +56,7 @@ fn main() {
             Arg::with_name("line-length")
                 .long("line-length")
                 .takes_value(true)
-                .help("test"),
+                .help("If specified, newlines will be inserted after the specified length."),
         )
         .arg(Arg::with_name("ignore-whitespace").help("Ignore whitespaces."))
         .get_matches();
@@ -66,10 +66,25 @@ fn main() {
     let output_file_name = matches.value_of("output-file-name").unwrap();
     let output_variable_name = matches.value_of("output-variable-name").unwrap_or("stdin");
     let always_escape = matches.is_present("always-escape");
+    let disable_const = matches.is_present("no-const");
+    let line_length = matches.value_of("line-length");
+
+    let (line_length_str, line_length_bool, line_length_value) = if let Some(x) = line_length {
+        (
+            x,
+            true,
+            x.parse::<usize>().expect(&format!(
+                "Argument to line-length must be convertible to u32. Provided: {}",
+                x
+            )),
+        )
+    } else {
+        ("infinity", false, 0)
+    };
 
     println!(
-        "language:{} input_file:{} output_file:{} always_escape:{} output_variable_name:{}",
-        language, input_file_name, output_file_name, always_escape, output_variable_name
+        "language:{} input_file:{} output_file:{} always_escape:{} output_variable_name:{} disable_const:{} line_length:{}",
+        language, input_file_name, output_file_name, always_escape, output_variable_name,disable_const,line_length_str
     );
 
     let r = '\r' as i32;
@@ -77,48 +92,76 @@ fn main() {
     let t = '\t' as i32;
     let q = '\"' as i32;
     let s = '\\' as i32;
-    // TODO: Is it possible to integrate rayon?
+
     let content = fs::read(input_file_name)
         .expect("Something went wrong reading the file.")
         .par_iter()
         // TODO: It would be amazing if we could preallocate...
-        .fold(|| String::new(),
-              |mut acc: String, x: &u8| {
-                  let c = *x as i32;
+        .fold(
+            || (0, String::new()),
+            |(mut line_length, mut acc), x: &u8| {
+                let c = *x as i32;
 
-                  if always_escape {
-                      acc.push('\\' as u8 as char);
-                      acc.push(('0' as u8 + ((c & 0o700) >> 6) as u8) as char);
-                      acc.push(('0' as u8 + ((c & 0o070) >> 3) as u8) as char);
-                      acc.push(('0' as u8 + ((c & 0o007) >> 0) as u8) as char);
-                  } else if c >= 32 && c <= 126 && c != '"' as i32 && c != '\\' as i32 && c != '?' as i32 && c != ':' as i32 && c != '%' as i32 {
-                      acc.push(c as u8 as char)
-                  } else if c == r {
-                      acc.push('\r' as u8 as char);
-                  } else if c == n {
-                      acc.push('\n' as u8 as char);
-                  } else if c == t {
-                      acc.push('\t' as u8 as char);
-                  } else if c == q {
-                      acc.push('\"' as u8 as char);
-                  } else if c == s {
-                      acc.push('\\' as u8 as char);
-                  } else {
-                      acc.push('\\' as u8 as char);
-                      acc.push(('0' as u8 + ((c & 0o700) >> 6) as u8) as char);
-                      acc.push(('0' as u8 + ((c & 0o070) >> 3) as u8) as char);
-                      acc.push(('0' as u8 + ((c & 0o007) >> 0) as u8) as char);
-                  }
-                  acc
-              }).reduce(|| String::new(),
-                        |mut a: String, b: String| {
-                            a.push_str(&b);
-                            a
-                        });
+                if always_escape {
+                    acc.push('\\' as u8 as char);
+                    acc.push(('0' as u8 + ((c & 0o700) >> 6) as u8) as char);
+                    acc.push(('0' as u8 + ((c & 0o070) >> 3) as u8) as char);
+                    acc.push(('0' as u8 + ((c & 0o007) >> 0) as u8) as char);
+                    line_length += 4;
+                } else if c >= 32
+                    && c <= 126
+                    && c != '"' as i32
+                    && c != '\\' as i32
+                    && c != '?' as i32
+                    && c != ':' as i32
+                    && c != '%' as i32
+                {
+                    acc.push(c as u8 as char);
+                    line_length += 1;
+                } else if c == r {
+                    acc.push('\r' as u8 as char);
+                    line_length += 1;
+                } else if c == n {
+                    acc.push('\n' as u8 as char);
+                    line_length += 1;
+                } else if c == t {
+                    acc.push('\t' as u8 as char);
+                    line_length += 1;
+                } else if c == q {
+                    acc.push('\"' as u8 as char);
+                    line_length += 1;
+                } else if c == s {
+                    acc.push('\\' as u8 as char);
+                    line_length += 1;
+                } else {
+                    acc.push('\\' as u8 as char);
+                    acc.push(('0' as u8 + ((c & 0o700) >> 6) as u8) as char);
+                    acc.push(('0' as u8 + ((c & 0o070) >> 3) as u8) as char);
+                    acc.push(('0' as u8 + ((c & 0o007) >> 0) as u8) as char);
+                    line_length += 4;
+                }
+
+                if line_length_bool && line_length > line_length_value {
+                    acc.push('\n');
+                    line_length = 0;
+                }
+
+                (line_length, acc)
+            },
+        )
+        .reduce(
+            || (0, String::new()),
+            |(_, mut a): (usize, String), (_, b): (usize, String)| {
+                a.push_str(&b);
+                (0, a)
+            },
+        )
+        .1;
 
     match language {
         "c" | "cpp" | "c++" => {
-            println!("const unsigned char {}[] = \"{}\";", output_variable_name, content);
+            let constness = if disable_const { "" } else { "const " };
+            println!("{} unsigned char {}[] = \"{}\";", constness,output_variable_name, content);
         }
         "python" | "py" => {
             println!("{}: str = {};", output_variable_name, content);
