@@ -13,6 +13,7 @@ fn main() -> std::io::Result<()> {
         // Required arguments.
         .arg(
             Arg::with_name("language")
+                .long("language")
                 .help("Desired language")
                 .takes_value(true)
                 .index(1)
@@ -21,6 +22,7 @@ fn main() -> std::io::Result<()> {
         )
         .arg(
             Arg::with_name("input-file-name")
+                .long("input-file-name")
                 .help("Input file")
                 .takes_value(true)
                 .index(2)
@@ -29,6 +31,7 @@ fn main() -> std::io::Result<()> {
         )
         .arg(
             Arg::with_name("output-file-name")
+                .long("output-file-name")
                 .help("Output file")
                 .takes_value(true)
                 .index(3),
@@ -36,7 +39,7 @@ fn main() -> std::io::Result<()> {
         // Optional arguments
         .arg(
             Arg::with_name("output-variable-name")
-                .short("variable-name")
+                .long("variable-name")
                 .help("Specify the name of the output variable.")
                 .takes_value(true),
         )
@@ -45,12 +48,16 @@ fn main() -> std::io::Result<()> {
                 .help("If specified, the length of the vector will also be generated.")
                 .takes_value(true),
         )
-        .arg(Arg::with_name("no-const").help("Generated variables are mutable."))
+        .arg(
+            Arg::with_name("no-const")
+                .long("no-const")
+                .help("Generated variables are mutable."),
+        )
         // NOTE: I don't quite get what this means...
         .arg(
             Arg::with_name("always-escape")
                 .long("always-escape")
-                .help(" Always escape every byte with an octal escape."),
+                .help("Always escape every byte with an octal escape."),
         )
         .arg(
             Arg::with_name("line-length")
@@ -58,7 +65,11 @@ fn main() -> std::io::Result<()> {
                 .takes_value(true)
                 .help("WIP: Append every Nth character with a newline."),
         )
-        .arg(Arg::with_name("ignore-whitespace").help("Ignore whitespaces."))
+        .arg(
+            Arg::with_name("ignore-whitespace")
+                .long("ignore-whitespace")
+                .help("Ignore whitespaces."),
+        )
         .get_matches();
 
     let language = matches.value_of("language").unwrap();
