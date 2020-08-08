@@ -1,6 +1,6 @@
 [package]
 name = "chisai"
-version = "0.1.3"
+version = "0.2.0"
 authors = ["Hanif Bin Ariffin <hanif.ariffin.4326@gmail.com>"]
 edition = "2018"
 description = "Convert binaries into code that can be embed into your program."
