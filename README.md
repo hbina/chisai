@@ -35,82 +35,32 @@ ARGS:
 
 ## Benchmark
 
-Using `hyperfine` to benchmark by converting `[Doremi].Go!.Princess.Precure.28.[1280x720].[2F623257].mkv` renamed to `test.mkv` which is about `369.3MB`.
+Using `hyperfine` by applying the programs to `target/debug/chisai` itself.
 
 ```shell
-hbina085@hbinalapt:~/Downloads$ ls -l test.mkv 
--rwxrwxrwx 1 hbina085 hbina085 369327503 Jul 23 17:27 test.mkv
-hbina085@hbinalapt:~/Downloads$ hyperfine --warmup 3 "chisai cpp test.mkv outfile" --export-json benchmark_chisai.json
-Benchmark #1: chisai cpp test.mkv outfile
-  Time (mean ± σ):      2.572 s ±  0.101 s    [User: 11.334 s, System: 2.397 s]
-  Range (min … max):    2.415 s …  2.749 s    10 runs
+hbina@hbinalapt:~/git/chisai$ ./profile.sh 
+    Finished release [optimized] target(s) in 0.02s
+-rwxrwxr-x 2 hbina hbina 14234544 Aug  7 21:57 target/debug/chisai
+Benchmark #1: xxd -i target/debug/chisai
+  Time (mean ± σ):      1.465 s ±  0.019 s    [User: 1.459 s, System: 0.004 s]
+  Range (min … max):    1.436 s …  1.499 s    10 runs
  
-hbina085@hbinalapt:~/Downloads$ hyperfine --warmup 3 "./strliteral test.mkv" --export-json benchmark_strliteral.json
-Benchmark #1: ./strliteral test.mkv
-  Time (mean ± σ):      3.971 s ±  0.077 s    [User: 3.854 s, System: 0.108 s]
-  Range (min … max):    3.873 s …  4.095 s    10 runs
+Benchmark #1: xxd-rs generate target/debug/chisai
+  Time (mean ± σ):      5.630 s ±  0.231 s    [User: 2.358 s, System: 3.266 s]
+  Range (min … max):    5.381 s …  6.057 s    10 runs
+ 
+Benchmark #1: ./strliteral target/debug/chisai
+  Time (mean ± σ):     124.2 ms ±   5.1 ms    [User: 120.1 ms, System: 3.9 ms]
+  Range (min … max):   109.4 ms … 133.0 ms    23 runs
+ 
+Benchmark #1: target/release/chisai --format=hex target/debug/chisai cpp
+  Time (mean ± σ):     576.9 ms ±   7.1 ms    [User: 3.377 s, System: 0.285 s]
+  Range (min … max):   565.4 ms … 588.1 ms    10 runs
  
 
 ```
 
-## strliteral
-
-```json
-{
-  "results": [
-    {
-      "command": "./strliteral test.mkv",
-      "mean": 4.0896332868,
-      "stddev": 0.47063479103199835,
-      "median": 3.9372541290000003,
-      "user": 3.962159145,
-      "system": 0.116312375,
-      "min": 3.6839701245,
-      "max": 5.1621161275,
-      "times": [
-        3.6839701245,
-        3.6943990525,
-        3.9264306605000003,
-        3.7815495475,
-        4.0116240505,
-        3.9480775975,
-        3.8907904335000003,
-        4.1301359575,
-        4.6672393165,
-        5.1621161275
-      ]
-    }
-  ]
-}
-```
-
-## chisai
-
-```json
-{
-  "results": [
-    {
-      "command": "chisai cpp test.mkv outfile",
-      "mean": 2.57200334339,
-      "stddev": 0.10101415479260571,
-      "median": 2.55863462079,
-      "user": 11.333895325,
-      "system": 2.39657342,
-      "min": 2.41521520579,
-      "max": 2.74894131279,
-      "times": [
-        2.69010737279,
-        2.52024189479,
-        2.50440452979,
-        2.5672032687899997,
-        2.62540644779,
-        2.62117424479,
-        2.74894131279,
-        2.47727318379,
-        2.41521520579,
-        2.55006597279
-      ]
-    }
-  ]
-}
-```
+`chisai` is ~3x faster than `xxd` and leagues faster than `xxd-rs`.
+The program is still a lot slower than `strliteral`.
+I think we could achieve performance parity if we can preallocate memory buffer for the output.
+However, this is quite tricky to do without digging deep and writing necromonicons...
