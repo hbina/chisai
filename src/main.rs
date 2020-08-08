@@ -1,30 +1,9 @@
 extern crate clap;
 
-use std::fs;
-use std::io::prelude::*;
-
 use clap::{crate_version, App, Arg};
 use rayon::prelude::*;
-
-#[derive(Debug, Copy, Clone)]
-enum Format {
-    Binary,
-    Octal,
-    LowerHex,
-    UpperHex,
-}
-
-impl From<&str> for Format {
-    fn from(x: &str) -> Self {
-        match x {
-            "binary" => Format::Binary,
-            "octal" => Format::Octal,
-            "lowerhex" => Format::LowerHex,
-            "upperhex" => Format::UpperHex,
-            _ => Format::Octal,
-        }
-    }
-}
+use std::fs;
+use std::io::prelude::*;
 
 fn main() -> std::io::Result<()> {
     let matches = App::new("chisai")
@@ -39,7 +18,7 @@ fn main() -> std::io::Result<()> {
                 .takes_value(true)
                 .index(1)
                 .required(true)
-                .help("Input file"),
+                .help("Input file."),
         )
         .arg(
             Arg::with_name("language")
@@ -53,7 +32,7 @@ fn main() -> std::io::Result<()> {
         .arg(
             Arg::with_name("output-file-name")
                 .long("output-file-name")
-                .help("Output file")
+                .help("Output file.")
                 .takes_value(true)
                 .index(3),
         )
@@ -92,11 +71,6 @@ fn main() -> std::io::Result<()> {
                 .takes_value(true)
                 .help("For every N variable, append a newline."),
         )
-        .arg(
-            Arg::with_name("ignore-whitespace")
-                .long("ignore-whitespace")
-                .help("Ignore whitespaces."),
-        )
         .get_matches();
 
     let language = matches.value_of("language").unwrap();
@@ -105,8 +79,12 @@ fn main() -> std::io::Result<()> {
     let output_variable_name = matches.value_of("output-variable-name").unwrap_or("stdin");
     let always_escape = matches.is_present("always-escape");
     let disable_const = matches.is_present("no-const");
-    let ignore_whitespace = matches.is_present("ignore-whitespace");
-    let format = matches.value_of("format").unwrap_or("ii");
+    let format = matches.value_of("format").unwrap_or("octal");
+    let variable_per_line = matches
+        .value_of("variable-per-line")
+        .unwrap_or("10")
+        .parse::<usize>()
+        .expect("Unable to convert argument to variable-per-line to integer.");
 
     dbg!(
         language,
@@ -115,29 +93,40 @@ fn main() -> std::io::Result<()> {
         always_escape,
         output_variable_name,
         disable_const,
-        ignore_whitespace,
         format
     );
 
-    let content = if let Ok(x) = fs::read(input_file_name) {
-        let mut content = x
+    let content = {
+        let mut content = fs::read(input_file_name)?
             .par_iter()
+            .enumerate()
             .fold(
                 || String::new(),
-                |mut s: String, c: &u8| {
-                    match format.into() {
-                        Format::Binary => {
-                            s += &format!("{:#b}, ", c);
+                |mut s: String, (index, c): (usize, &u8)| {
+                    let index = index + 1;
+                    if (index % variable_per_line) == 1 {
+                        s += "  ";
+                    }
+                    // TODO: This can be extracted out of this loop.
+                    match format {
+                        "binary" => {
+                            s += &format!("0b{:0>8b}, ", c);
                         }
-                        Format::Octal => {
-                            s += &format!("0x{:#o}, ", c);
+                        "octal" => {
+                            s += &format!("0{:0>3o}, ", c);
                         }
-                        Format::LowerHex => {
-                            s += &format!("{:#x}, ", c);
+                        "hex" => {
+                            s += &format!("0x{:0>2X}, ", c);
                         }
-                        Format::UpperHex => {
-                            s += &format!("{:#X}, ", c);
+                        "decimal" => {
+                            s += &format!("{:0>3}, ", c);
                         }
+                        _ => {
+                            panic!("Invalid format {}", format);
+                        }
+                    }
+                    if index != 0 && (index % variable_per_line) == 0 {
+                        s.push('\n');
                     }
                     s
                 },
@@ -149,10 +138,10 @@ fn main() -> std::io::Result<()> {
                     a
                 },
             );
+        // TODO: This is frankly quite arbitrary and ugly...
+        // Consider fixing it...
         content.truncate(content.len() - 2);
         content
-    } else {
-        panic!("Something went wrong while reading the file.")
     };
 
     let output_string = match language {
