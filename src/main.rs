@@ -1,9 +1,10 @@
 extern crate clap;
 
-use clap::{crate_version, App, Arg};
-use rayon::prelude::*;
 use std::fs;
 use std::io::prelude::*;
+
+use clap::{crate_version, App, Arg};
+use rayon::prelude::*;
 
 fn main() -> std::io::Result<()> {
     let matches = App::new("chisai")
@@ -93,7 +94,8 @@ fn main() -> std::io::Result<()> {
         always_escape,
         output_variable_name,
         disable_const,
-        format
+        format,
+        variable_per_line
     );
 
     let content = {
@@ -144,6 +146,7 @@ fn main() -> std::io::Result<()> {
         content
     };
 
+    // TODO: Make the code below easier to extend...
     let output_string = match language {
         "c" | "cpp" | "c++" => {
             let constness = if disable_const {
