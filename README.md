@@ -7,30 +7,29 @@ Almost at full parity with [`strliteral`](https://github.com/mortie/strliteral) 
 Many features are WIP.
 
 ```
-chisai 0.1.2
+chisai 0.2.0
 Hanif Bin Ariffin <hanif.ariffin.4326@gmail.com>
 Transform binaries into embeddable code.
 
 USAGE:
-    chisai [FLAGS] [OPTIONS] <language> <input-file-name> [ARGS]
+    chisai [FLAGS] [OPTIONS] <input-file-name> <language> [ARGS]
 
 FLAGS:
-        --always-escape         Always escape every byte with an octal escape.
-    -h, --help                 Prints help information
-        --ignore-whitespace    Ignore whitespaces.
-        --no-const             Generated variables are mutable.
-    -V, --version              Prints version information
+        --always-escape    Always escape every byte with an octal escape.
+    -h, --help             Prints help information
+        --no-const         Generated variables are mutable.
+    -V, --version          Prints version information
 
 OPTIONS:
-        --line-length <line-length>               WIP: Append every Nth character with a newline.
-        --variable-name <output-variable-name>    Specify the name of the output variable.
+        --format <format>                          The format of the values.
+        --variable-name <output-variable-name>     Specify the name of the output variable.
+        --variable-per-line <variable-per-line>    For every N variable, append a newline.
 
 ARGS:
+    <input-file-name>     Input file.
     <language>            Desired language of the generated code.
-    <input-file-name>     Input file
-    <output-file-name>    Output file
+    <output-file-name>    Output file.
     <output-length>       If specified, the length of the vector will also be generated.
-
 ```
 
 ## Benchmark
