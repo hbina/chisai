@@ -99,7 +99,10 @@ fn main() -> std::io::Result<()> {
     );
 
     let content = {
-        let mut content = fs::read(input_file_name)?
+        let mut content = 
+        // NOTE: I think this is perhaps the heaviest task of all.
+        // AFAIK, it will read the entire file into RAM.
+        fs::read(input_file_name)?
             .par_iter()
             .enumerate()
             .fold(
