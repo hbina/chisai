@@ -1,6 +1,6 @@
 [package]
 name = "chisai"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Hanif Bin Ariffin <hanif.ariffin.4326@gmail.com>"]
 edition = "2018"
 description = "Convert binaries into code that can be embed into your program."
@@ -8,7 +8,7 @@ license = "MIT"
 documentation = "https://github.com/hbina/chisai"
 repository = "https://github.com/hbina/chisai"
 homepage = "https://github.com/hbina/chisai"
-cageories = ["command-line-utilities", "compression", "development-tools", "encoding", "parsing"]
+categories = ["command-line-utilities", "compression", "development-tools", "encoding", "parsing"]
 keywords = ["xxd"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
