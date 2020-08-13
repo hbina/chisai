@@ -6,6 +6,8 @@ use std::io::prelude::*;
 use clap::{crate_version, App, Arg};
 use rayon::prelude::*;
 
+mod config;
+
 fn main() -> std::io::Result<()> {
     let matches = App::new("chisai")
         .version(crate_version!())
@@ -74,29 +76,11 @@ fn main() -> std::io::Result<()> {
         )
         .get_matches();
 
-    let language = matches.value_of("language").unwrap();
-    let input_file_name = matches.value_of("input-file-name").unwrap();
-    let output_file_name = matches.value_of("output-file-name");
-    let output_variable_name = matches.value_of("output-variable-name").unwrap_or("stdin");
-    let always_escape = matches.is_present("always-escape");
-    let disable_const = matches.is_present("no-const");
-    let format = matches.value_of("format").unwrap_or("octal");
-    let variable_per_line = matches
-        .value_of("variable-per-line")
-        .unwrap_or("10")
-        .parse::<usize>()
-        .expect("Unable to convert argument to variable-per-line to integer.");
-
-    dbg!(
-        language,
-        input_file_name,
-        output_file_name,
-        always_escape,
-        output_variable_name,
-        disable_const,
-        format,
-        variable_per_line
-    );
+let config = if let Ok(config) = config::Config::new(matches){
+    config
+} else {
+    return Err(anyhow::anyhow!("rere"));
+};
 
     let content = {
         let mut content = 
